@@ -218,6 +218,15 @@ def save_tweet(tweet_id, user_id, tweet):
     for follower_id in follower_ids:
         TIMELINE.insert(str(follower_id), {ts: str(tweet_id)})
 
+def save_retweet(tweet_id, user_id):
+    """
+    Records a retweet.
+    """
+    ts = _long(int(time.time() * 1e6))
+    # Insert the tweet into all of the follower streams
+    for follower_id in get_follower_ids(user_id):
+        TIMELINE.insert(str(follower_id), {ts: str(tweet_id)})
+
 def add_friends(from_user, to_users):
     """
     Adds a friendship relationship from one user to some others.
