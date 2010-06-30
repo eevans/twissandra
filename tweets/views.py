@@ -85,3 +85,8 @@ def userline(request, username=None):
     }
     return render_to_response('tweets/userline.html', context,
         context_instance=RequestContext(request))
+
+def retweet(request, tweetid=None):
+    userid = request.user['id']
+    cass.save_retweet(tweetid, userid)
+    return HttpResponseRedirect(reverse('timeline'))
