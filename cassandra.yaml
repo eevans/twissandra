@@ -262,8 +262,10 @@ keyspaces:
     column_families:
       - name: User
         compare_with: UTF8Type
-      - name: Username
-        compare_with: BytesType
+        column_metadata:
+          - name: username
+            validator_class: UTF8Type
+            index_type: KEYS
       - name: Friends
         compare_with: BytesType
       - name: Followers

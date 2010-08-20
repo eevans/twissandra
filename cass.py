@@ -3,7 +3,8 @@ import time
 
 from odict import OrderedDict
 
-import pycassa
+from pycassa import connect_thread_local, ColumnFamily
+from pycassa.index import create_index_clause, create_index_expression
 
 from cassandra.ttypes import NotFoundException
 
@@ -13,15 +14,14 @@ __all__ = ['get_user_by_id', 'get_user_by_username', 'get_friend_ids',
     'save_tweet', 'add_friends', 'remove_friends', 'DatabaseError',
     'NotFound', 'InvalidDictionary', 'PUBLIC_USERLINE_KEY']
 
-CLIENT = pycassa.connect_thread_local('Twissandra', framed_transport=True)
+CLIENT = connect_thread_local('Twissandra', framed_transport=True)
 
-USER = pycassa.ColumnFamily(CLIENT, 'User', dict_class=OrderedDict)
-USERNAME = pycassa.ColumnFamily(CLIENT, 'Username', dict_class=OrderedDict)
-FRIENDS = pycassa.ColumnFamily(CLIENT, 'Friends', dict_class=OrderedDict)
-FOLLOWERS = pycassa.ColumnFamily(CLIENT, 'Followers', dict_class=OrderedDict)
-TWEET = pycassa.ColumnFamily(CLIENT, 'Tweet', dict_class=OrderedDict)
-TIMELINE = pycassa.ColumnFamily(CLIENT, 'Timeline', dict_class=OrderedDict)
-USERLINE = pycassa.ColumnFamily(CLIENT, 'Userline', dict_class=OrderedDict)
+USER = ColumnFamily(CLIENT, 'User', dict_class=OrderedDict)
+FRIENDS = ColumnFamily(CLIENT, 'Friends', dict_class=OrderedDict)
+FOLLOWERS = ColumnFamily(CLIENT, 'Followers', dict_class=OrderedDict)
+TWEET = ColumnFamily(CLIENT, 'Tweet', dict_class=OrderedDict)
+TIMELINE = ColumnFamily(CLIENT, 'Timeline', dict_class=OrderedDict)
+USERLINE = ColumnFamily(CLIENT, 'Userline', dict_class=OrderedDict)
 
 # NOTE: Having a single userline key to store all of the public tweets is not
 #       scalable.  Currently, Cassandra requires that an entire row (meaning
@@ -104,15 +104,18 @@ def get_user_by_username(username):
     """
     Given a username, this gets the user record.
     """
-    # First get the user id
+    exprsn = create_index_expression(column_name='username', value=username)
+    clause = create_index_clause([exprsn])
+
     try:
-        record = USERNAME.get(username.encode('utf-8'))
+        record = USER.get_indexed_slices(clause)
     except NotFoundException:
         raise NotFound('User %s not found' % (username,))
-    if 'id' not in record:
-        raise NotFound('Username %s not found' % (username,))
-    # Now, use the user id to get the whole user record
-    return get_user_by_id(record['id'])
+
+    assert len(record.items()) == 1
+    (userid, user) = record.popitem()
+
+    return user
 
 def get_friend_ids(user_id, count=5000):
     """
@@ -182,10 +185,6 @@ def save_user(user_id, user):
     """
     # First save the user record
     USER.insert(str(user_id), user)
-    # Then save the index from username to user id
-    if 'username' in user:
-        key = user['username'].encode('utf-8')
-        USERNAME.insert(key, {'id': str(user_id)})
 
 def save_tweet(tweet_id, user_id, tweet):
     """
