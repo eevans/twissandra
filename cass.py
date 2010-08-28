@@ -6,7 +6,7 @@ from odict import OrderedDict
 from pycassa import connect_thread_local, ColumnFamily
 from pycassa.index import create_index_clause, create_index_expression
 
-from cassandra.ttypes import NotFoundException
+from pycassa.cassandra.ttypes import NotFoundException
 
 __all__ = ['get_user_by_id', 'get_user_by_username', 'get_friend_ids',
     'get_follower_ids', 'get_users_for_user_ids', 'get_friends',
