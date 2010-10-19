@@ -20,7 +20,7 @@
                 <a href="{% url userline tweet.username %}" class="username">{{ tweet.username }}</a>
                 <span class="body">{{ tweet.body|urlize }}</span>
                 {% if request.user.is_authenticated %}
-                  {% ifnotequal request.user.id tweet.user.id %}
+                  {% ifnotequal request.session.username tweet.username %}
                     <span><a href="{% url retweet tweet.id %}">Retweet</a></span>
                   {% endifnotequal %}
                 {% endif %}

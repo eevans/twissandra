@@ -243,7 +243,9 @@ def remove_friends(from_username, to_usernames):
     for to_username in to_usernames:
         FOLLOWERS.remove(str(to_username), column=str(to_username))
 
-def save_retweet(tweet_id, user_id):
+def save_retweet(tweet_id, username):
     """
-    Records a retweet.
+    Given a unique tweet identifier and a username, insert the tweet into
+    the user's timeline.
     """
+    pass

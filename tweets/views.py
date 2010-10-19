@@ -74,6 +74,6 @@ def userline(request, username=None):
         context_instance=RequestContext(request))
 
 def retweet(request, tweetid=None):
-    userid = request.user['id']
+    userid = request.session['username']
     cass.save_retweet(tweetid, userid)
     return HttpResponseRedirect(reverse('timeline'))
