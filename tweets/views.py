@@ -1,5 +1,3 @@
-import uuid
-
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponseRedirect, Http404
@@ -14,11 +12,7 @@ NUM_PER_PAGE = 40
 def timeline(request):
     form = TweetForm(request.POST or None)
     if request.user['is_authenticated'] and form.is_valid():
-        tweet_id = str(uuid.uuid1())
-        cass.save_tweet(tweet_id, request.session['username'], {
-            'username': request.session['username'],
-            'body': form.cleaned_data['body'],
-        })
+        cass.save_tweet(request.session['username'], form.cleaned_data['body'])
         return HttpResponseRedirect(reverse('timeline'))
     start = request.GET.get('start')
     if request.user['is_authenticated']:

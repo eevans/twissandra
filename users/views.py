@@ -76,10 +76,7 @@ def modify_friend(request):
             )
             added = True
         if 'remove-friend' in request.POST:
-            cass.remove_friends(
-                request.session['username'],
-                [request.POST['remove-friend']]
-            )
+            cass.remove_friend(request.session['username'], request.POST['remove-friend'])
             removed = True
     if next:
         return HttpResponseRedirect(next)
