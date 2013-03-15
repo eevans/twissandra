@@ -3,9 +3,6 @@ import time
 import threading
 import cql
 
-import pycassa
-from pycassa.cassandra.ttypes import NotFoundException
-
 _local = threading.local()
 try:
     cursor = _local.cursor
@@ -17,8 +14,6 @@ except AttributeError:
 def _dictify_one_row(rows):
     assert len(rows) == 1, rows
     return dict((c.name, c.value) for c in rows[0].columns)
-
-# TODO use uuid bytes in row key rather than string
 
 
 __all__ = ['get_user_by_username', 'get_friend_usernames',
