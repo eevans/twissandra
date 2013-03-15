@@ -28,7 +28,7 @@ install the project:
 
 ### Check out the Twissandra source code
 
-    git clone git://github.com/ericflo/twissandra.git
+    git clone git://github.com/eevans/twissandra.git
 
 ### Install and configure Cassandra
 
@@ -47,10 +47,6 @@ Then we need to create our database directories on disk:
 Finally we can start Cassandra:
 
     ./bin/cassandra -f
-
-### Install Thrift
-
-Follow the instructions [provided on the Thrift website itself](http://wiki.apache.org/thrift/ThriftInstallation)
 
 ### Create a virtual Python environment with Twissandra's dependencies
 
