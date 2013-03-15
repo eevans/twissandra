@@ -94,64 +94,49 @@ In Cassandra, the way that your data is structured is very closely tied to how
 how it will be retrieved.  Let's start with the user ColumnFamily. The key is
 a username, and the columns are the properties on the user:
 
-    User = {
-        'hermes': {
-            'password': '****',
-            (other properties),
-        },
-    }
+    -- User storage
+    CREATE TABLE users (username text PRIMARY KEY, password text);
 
 Friends and followers are keyed by the username, and then the columns are the
 friend names and follower names, and we store a timestamp as the value because
 it's interesting information to have:
     
-    Friends = {
-        'hermes': {
-            # friend id: timestamp of when the friendship was added
-            'larry': '1267413962580791',
-            'curly': '1267413990076949',
-            'moe'  : '1267414008133277',
-        },
-    }
+    -- Users user is following
+    CREATE TABLE following (
+        username text,
+        followed text,
+        PRIMARY KEY(username, followed)
+    );
     
-    Followers = {
-        'hermes': {
-            # friend id: timestamp of when the followership was added
-            'larry': '1267413962580791',
-            'curly': '1267413990076949',
-            'moe'  : '1267414008133277',
-        },
-    }
+    -- Users who follow user
+    CREATE TABLE followers (
+        username text,
+        following text,
+        PRIMARY KEY(username, following)
+    );
 
 Tweets are stored with a tweet id for the key.
 
-    Tweet = {
-        '7561a442-24e2-11df-8924-001ff3591711': {
-            'username': 'hermes',
-            'body': 'Trying out Twissandra. This is awesome!',
-        },
-    }
+    -- Tweet storage
+    CREATE TABLE tweets (id uuid PRIMARY KEY, username text, body text);
 
 The Timeline and Userline column families keep track of which tweets should
 appear, and in what order.  To that effect, the key is the username, the column
 name is a timestamp, and the column value is the tweet id:
 
-    Timeline = {
-        'hermes': {
-            # timestamp of tweet: tweet id
-            1267414247561777: '7561a442-24e2-11df-8924-001ff3591711',
-            1267414277402340: 'f0c8d718-24e2-11df-8924-001ff3591711',
-            1267414305866969: 'f9e6d804-24e2-11df-8924-001ff3591711',
-            1267414319522925: '02ccb5ec-24e3-11df-8924-001ff3591711',
-        },
-    }
-    
-    Userline = {
-        'hermes': {
-            # timestamp of tweet: tweet id
-            1267414247561777: '7561a442-24e2-11df-8924-001ff3591711',
-            1267414277402340: 'f0c8d718-24e2-11df-8924-001ff3591711',
-            1267414305866969: 'f9e6d804-24e2-11df-8924-001ff3591711',
-            1267414319522925: '02ccb5ec-24e3-11df-8924-001ff3591711',
-        },
-    }
+    -- Materialized view of tweets created by user
+    CREATE TABLE userline (
+        posted_at timeuuid,
+        username text,
+        body text,
+        PRIMARY KEY(username, posted_at)
+    );
+
+    -- Materialized view of tweets created by user, and users she follows
+    CREATE TABLE timeline (
+        username text,
+        posted_at timeuuid,
+        posted_by text,
+        body text,
+        PRIMARY KEY(username, posted_at)
+    );
