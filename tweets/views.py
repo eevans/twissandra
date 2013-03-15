@@ -19,7 +19,7 @@ def timeline(request):
         tweets,next = cass.get_timeline(request.session['username'],
             start=start, limit=NUM_PER_PAGE)
     else:
-        tweets,next = cass.get_userline(cass.PUBLIC_USERLINE_KEY, start=start,
+        tweets,next = cass.get_timeline(cass.PUBLIC_TIMELINE_KEY, start=start,
             limit=NUM_PER_PAGE)
     context = {
         'form': form,
@@ -31,7 +31,7 @@ def timeline(request):
 
 def publicline(request):
     start = request.GET.get('start')
-    tweets,next = cass.get_userline(cass.PUBLIC_USERLINE_KEY, start=start,
+    tweets,next = cass.get_timeline(cass.PUBLIC_TIMELINE_KEY, start=start,
         limit=NUM_PER_PAGE)
     context = {
         'tweets': tweets,
