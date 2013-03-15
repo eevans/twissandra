@@ -1,27 +1,27 @@
 
-import pycassa, cql
-from pycassa.system_manager import *
+import cql
 
 from django.core.management.base import NoArgsCommand
 
 class Command(NoArgsCommand):
     def handle_noargs(self, **options):
-        sys = SystemManager()
-
-        # If there is already a Twissandra keyspace, we have to ask the user
-        # what they want to do with it.
-        if 'twissandra' in sys.list_keyspaces():
-            msg = 'Looks like you already have a Twissandra keyspace.\nDo you '
-            msg += 'want to delete it and recreate it? All current data will '
-            msg += 'be deleted! (y/n): '
-            resp = raw_input(msg)
-            if not resp or resp[0] != 'y':
-                print "Ok, then we're done here."
-                return
-            sys.drop_keyspace('twissandra')
-
+        # Create Cassandra connection and obtain a cursor.
         conn = cql.connect("localhost", cql_version="3.0.0")
         cursor = conn.cursor()
+
+        # This can result in data loss, so prompt the user first.
+        print
+        print "Warning:  This will drop any existing keyspace named \"twissandra\","
+        print "and delete any data contained within."
+        print
+
+        if not raw_input("Are you sure? (y/n) ").lower() in ('y', "yes"):
+            print "Ok, then we're done here."
+            return
+
+        print "Dropping existing keyspace..."
+        cursor.execute("DROP KEYSPACE twissandra")
+
 
         print "Creating keyspace..."
         cursor.execute("""
