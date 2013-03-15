@@ -22,37 +22,68 @@ class Command(NoArgsCommand):
         print "Dropping existing keyspace..."
         cursor.execute("DROP KEYSPACE twissandra")
 
-
         print "Creating keyspace..."
         cursor.execute("""
             CREATE KEYSPACE twissandra
-                WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}
+            WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}
         """)
         cursor.execute("USE twissandra")
 
         print "Creating users columnfamily..."
-        cursor.execute("CREATE TABLE users (id text PRIMARY KEY, password text)")
+        cursor.execute("""
+            CREATE TABLE users (
+                username text PRIMARY KEY,
+                password text
+            )
+        """)
 
         print "Creating following columnfamily..."
         cursor.execute("""
-            CREATE TABLE following (id uuid PRIMARY KEY, followed text, followed_by text)
+            CREATE TABLE following (
+                username text,
+                followed text,
+                PRIMARY KEY(username, followed)
+            )
         """)
 
-        print "Creating indexes..."
-        cursor.execute("CREATE INDEX following_followed ON following(followed)")
-        cursor.execute("CREATE INDEX following_followed_by ON following(followed_by)")
+        print "Creating followers columnfamily..."
+        cursor.execute("""
+            CREATE TABLE followers (
+                username text,
+                following text,
+                PRIMARY KEY(username, following)
+            )
+        """)
+
 
         print "Creating tweets columnfamily..."
-        cursor.execute("CREATE TABLE tweets (id uuid PRIMARY KEY, user_id text, body text)")
+        cursor.execute("""
+            CREATE TABLE tweets (
+                id uuid PRIMARY KEY,
+                username text,
+                body text
+            )
+        """)
 
         print "Creating userline columnfamily..."
         cursor.execute("""
-            CREATE TABLE userline (tweet timeuuid, username text, PRIMARY KEY(username, tweet))
+            CREATE TABLE userline (
+                posted_at timeuuid,
+                username text,
+                body text,
+                PRIMARY KEY(username, posted_at)
+            )
         """)
 
         print "Creating timeline columnfamily..."
         cursor.execute("""
-            CREATE TABLE timeline (tweet timeuuid, username text, PRIMARY KEY(username, tweet))
+            CREATE TABLE timeline (
+                posted_at timeuuid,
+                username text,
+                posted_by text,
+                body text,
+                PRIMARY KEY(username, posted_at)
+            )
         """)
 
         print 'All done!'
