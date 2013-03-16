@@ -91,15 +91,16 @@ Now go to http://127.0.0.1:8000/ and you can play with Twissandra!
 ## Schema Layout
 
 In Cassandra, the way that your data is structured is very closely tied to how
-how it will be retrieved.  Let's start with the user ColumnFamily. The key is
-a username, and the columns are the properties on the user:
+how it will be retrieved.  Let's start with the user table. The key is a
+username, and the columns are the properties on the user:
 
     -- User storage
     CREATE TABLE users (username text PRIMARY KEY, password text);
 
-Friends and followers are keyed by the username, and then the columns are the
-friend names and follower names, and we store a timestamp as the value because
-it's interesting information to have:
+Friends and followers are keyed by the username in the `following` and
+`followers` tables respectively.  The use of a compound PRIMARY KEY like
+this allows us to setup a one to many relationship between a user and the
+people they are following, or the people following them.
     
     -- Users user is following
     CREATE TABLE following (
@@ -115,14 +116,19 @@ it's interesting information to have:
         PRIMARY KEY(username, following)
     );
 
-Tweets are stored with a tweet id for the key.
+Tweets are stored with a UUID for the key.
 
     -- Tweet storage
     CREATE TABLE tweets (id uuid PRIMARY KEY, username text, body text);
 
-The Timeline and Userline column families keep track of which tweets should
-appear, and in what order.  To that effect, the key is the username, the column
-name is a timestamp, and the column value is the tweet id:
+The `timeline` and `userline` tables keep track of which tweets should
+appear, and in what order.  To that effect, the partition key is the
+username, with columns for the time each was posted, and the text of the
+tweet.
+
+The `timeline` table has an additional column for storing the user who
+authored the tweet.  This is because the timeline stores a materialized
+view of the tweets a user is interested in; tweets created by others:
 
     -- Materialized view of tweets created by user
     CREATE TABLE userline (
