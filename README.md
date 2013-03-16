@@ -18,9 +18,8 @@ install the project:
 1. Check out the latest Cassandra source code
 2. Check out the Twissandra source code
 3. Install and configure Cassandra
-4. Install Thrift
-5. Create a virtual Python environment with Twissandra's dependencies
-6. Start up the webserver
+4. Create a virtual Python environment with Twissandra's dependencies
+5. Start up the webserver
 
 ### Check out the latest Cassandra source code
 
