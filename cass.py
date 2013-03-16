@@ -74,7 +74,7 @@ def get_timeline(username, start=None, limit=40):
     """
     Given a username, get their tweet timeline (tweets from people they follow).
     """
-    if start: posted_at_start = start
+    if start: posted_at_start = str(start)
     else: posted_at_start = "now()"
 
     query = """
@@ -98,7 +98,7 @@ def get_userline(username, start=None, limit=40):
     """
     Given a username, get their userline (their tweets).
     """
-    if start: posted_at_start = start
+    if start: posted_at_start = str(start)
     else: posted_at_start = "now()"
 
     query = """
