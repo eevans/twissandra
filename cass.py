@@ -31,9 +31,6 @@ __all__ = [
 PUBLIC_TIMELINE_KEY = '!PUBLIC!'
 
 
-def now():
-    return int(time.time() * 1e3)
-
 # EXCEPTIONS
 
 class DatabaseError(Exception):
@@ -78,49 +75,48 @@ def get_timeline(username, start=None, limit=40):
     Given a username, get their tweet timeline (tweets from people they follow).
     """
     if start: posted_at_start = str(start)
-    else: posted_at_start = str(now())
+    else: posted_at_start = "now()"
 
     query = """
-        SELECT tweetid, posted_at, posted_by, body
-        FROM timeline
-        WHERE username = :username AND posted_at <= :posted_at ORDER BY posted_at DESC LIMIT :limit
+        SELECT posted_at, posted_by, body FROM timeline
+        WHERE username = :username AND posted_at < %s ORDER BY posted_at DESC LIMIT %d
     """
-    cursor.execute(query, dict(username=username, posted_at=posted_at_start, limit=(limit+1)))
+    cursor.execute(query % (posted_at_start, limit+1), dict(username=username))
 
-    next_start = None
+    nextid = None
     tweets = []
 
     for row in cursor:
-        tweets.append({"id": row[0], "posted_at": row[1], "username": row[2], "body": row[3]})
+        tweets.append({"id": row[0], "username": row[1], "body": row[2]})
 
     if len(tweets) > limit:
-        next_start = int(tweets.pop()["posted_at"] * 1e3)
+        nextid = tweets.pop()["id"]
 
-    return (tweets, next_start)
+    return (tweets, nextid)
 
 def get_userline(username, start=None, limit=40):
     """
     Given a username, get their userline (their tweets).
     """
     if start: posted_at_start = str(start)
-    else: posted_at_start = str(now())
+    else: posted_at_start = "now()"
 
     query = """
-        SELECT tweetid, posted_at, body FROM userline
-        WHERE username = :username AND posted_at <= :posted_at ORDER BY posted_at DESC LIMIT :limit
+        SELECT posted_at, body FROM userline
+        WHERE username = :username AND posted_at < %s ORDER BY posted_at DESC LIMIT %d
     """
-    cursor.execute(query, dict(username=username, posted_at=posted_at_start, limit=limit))
+    cursor.execute(query % (posted_at_start, limit+1), dict(username=username))
 
-    next_start = None
+    nextid = None
     tweets = []
 
     for row in cursor:
-        tweets.append({"id": row[0], "posted_at": row[1], "username": username, "body": row[2]})
+        tweets.append({"id": row[0], "username": username, "body": row[1]})
 
     if len(tweets) > limit:
-        next_start = int(tweets.pop()["posted_at"] * 1e3)
+        nextid = tweets.pop()["id"]
 
-    return (tweets, next_start)
+    return (tweets, nextid)
 
 def get_tweet(tweet_id):
     """
@@ -148,50 +144,30 @@ def save_tweet(username, body):
     Saves the tweet record.
     """
     # Create a type 1 UUID based on the current time.
-    tweet_id = uuid.uuid4()
-
-    # Tweet timestamp in millis since epoch.
-    tstamp = now()
+    tweet_id = uuid.uuid1()
 
     # Make sure the tweet body is utf-8 encoded.
     body = body.encode('utf-8')
 
-    # Insert the tweet, then into the user's userline, then into the public timeline.
+    # Insert the tweet, then into the user's userline, then into the public userline.
     cursor.execute(
         "INSERT INTO tweets (id, username, body) VALUES (:tweet_id, :username, :body)",
         dict(tweet_id=tweet_id, username=username, body=body))
     cursor.execute(
-        """
-        INSERT INTO userline (username, posted_at, tweetid, body)
-        VALUES (:username, :posted_at, :tweetid, :body)
-        """,
-        dict(username=username, posted_at=tstamp, tweetid=tweet_id, body=body))
+        "INSERT INTO userline (username, posted_at, body) VALUES (:username, :posted_at, :body)",
+        dict(username=username, posted_at=tweet_id, body=body))
     cursor.execute(
-        """
-        INSERT INTO timeline (username, posted_at, tweetid, posted_by, body)
-        VALUES (:username, :posted_at, :tweetid, :posted_by, :body)
-        """,
-        dict(
-            username=PUBLIC_TIMELINE_KEY,
-            posted_at=tstamp,
-            tweetid=tweet_id,
-            posted_by=username,
-            body=body))
+        """INSERT INTO timeline (username, posted_at, posted_by, body)
+           VALUES (:username, :posted_at, :posted_by, :body)""",
+        dict(username=PUBLIC_TIMELINE_KEY, posted_at=tweet_id, posted_by=username, body=body))
 
     # Get the user's followers, and insert the tweet into all of their streams
     follower_usernames = [username] + get_follower_usernames(username)
     for follower_username in follower_usernames:
         cursor.execute(
-            """
-            INSERT INTO timeline (username, posted_at, tweetid, posted_by, body)
-            VALUES (:username, :posted_at, :tweetid, :posted_by, :body)
-            """,
-            dict(
-                username=follower_username,
-                posted_at=tstamp,
-                tweetid=tweet_id,
-                posted_by=username,
-                body=body))
+            """INSERT INTO timeline (username, posted_at, posted_by, body)
+               VALUES (:username, :posted_at, :posted_by, :body)""",
+            dict(username=follower_username, posted_at=tweet_id, posted_by=username, body=body))
 
 def add_friends(from_username, to_usernames):
     """

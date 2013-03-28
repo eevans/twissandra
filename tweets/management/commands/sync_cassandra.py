@@ -68,9 +68,8 @@ class Command(NoArgsCommand):
         print "Creating userline columnfamily..."
         cursor.execute("""
             CREATE TABLE userline (
+                posted_at timeuuid,
                 username text,
-                posted_at timestamp,
-                tweetid uuid,
                 body text,
                 PRIMARY KEY(username, posted_at)
             )
@@ -79,9 +78,8 @@ class Command(NoArgsCommand):
         print "Creating timeline columnfamily..."
         cursor.execute("""
             CREATE TABLE timeline (
+                posted_at timeuuid,
                 username text,
-                posted_at timestamp,
-                tweetid uuid,
                 posted_by text,
                 body text,
                 PRIMARY KEY(username, posted_at)
