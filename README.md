@@ -110,7 +110,7 @@ people they are following, or the people following them.
     
     -- Users who follow user
     CREATE TABLE followers (
-        username text,
+        username  text,
         following text,
         PRIMARY KEY(username, following)
     );
@@ -118,7 +118,7 @@ people they are following, or the people following them.
 Tweets are stored with a UUID for the key.
 
     -- Tweet storage
-    CREATE TABLE tweets (id uuid PRIMARY KEY, username text, body text);
+    CREATE TABLE tweets (tweetid uuid PRIMARY KEY, username text, body text);
 
 The `timeline` and `userline` tables keep track of which tweets should
 appear, and in what order.  To that effect, the partition key is the
@@ -131,17 +131,17 @@ view of the tweets a user is interested in; tweets created by others:
 
     -- Materialized view of tweets created by user
     CREATE TABLE userline (
-        posted_at timeuuid,
+        tweetid  timeuuid,
         username text,
-        body text,
-        PRIMARY KEY(username, posted_at)
+        body     text,
+        PRIMARY KEY(username, tweetid)
     );
 
     -- Materialized view of tweets created by user, and users she follows
     CREATE TABLE timeline (
-        username text,
-        posted_at timeuuid,
+        username  text,
+        tweetid   timeuuid,
         posted_by text,
-        body text,
-        PRIMARY KEY(username, posted_at)
+        body      text,
+        PRIMARY KEY(username, tweetid)
     );
