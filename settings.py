@@ -3,7 +3,7 @@ import os
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
 DEBUG = True
-TEMPLATE_DEBUG = DEBUG
+TEMPLATE_DEBUG = True
 
 ADMINS = (
     #('Your Name', 'you@gmail.com'),
@@ -55,6 +55,8 @@ SECRET_KEY = 'm9$s12%k&z)v@7)9-mr7d4jn^7cqyxlj6a27!$svzb(43d0#of'
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
+    'django.template.loaders.app_directories.Loader',
+#     'django.template.loaders.eggs.Loader',
 )
 
 TEMPLATE_CONTEXT_PROCESSORS = (

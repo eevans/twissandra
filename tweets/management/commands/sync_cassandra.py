@@ -1,31 +1,92 @@
-import pycassa
-from pycassa.system_manager import *
+
+import cql
 
 from django.core.management.base import NoArgsCommand
 
 class Command(NoArgsCommand):
-
     def handle_noargs(self, **options):
-        sys = SystemManager()
+        # Create Cassandra connection and obtain a cursor.
+        conn = cql.connect("localhost", cql_version="3.0.0")
+        cursor = conn.cursor()
 
-        # If there is already a Twissandra keyspace, we have to ask the user
-        # what they want to do with it.
-        if 'Twissandra' in sys.list_keyspaces():
-            msg = 'Looks like you already have a Twissandra keyspace.\nDo you '
-            msg += 'want to delete it and recreate it? All current data will '
-            msg += 'be deleted! (y/n): '
-            resp = raw_input(msg)
-            if not resp or resp[0] != 'y':
-                print "Ok, then we're done here."
-                return
-            sys.drop_keyspace('Twissandra')
+        # This can result in data loss, so prompt the user first.
+        print
+        print "Warning:  This will drop any existing keyspace named \"twissandra\","
+        print "and delete any data contained within."
+        print
 
-        sys.create_keyspace('Twissandra', SIMPLE_STRATEGY, {'replication_factor': '1'})
-        sys.create_column_family('Twissandra', 'User', comparator_type=UTF8_TYPE)
-        sys.create_column_family('Twissandra', 'Friends', comparator_type=BYTES_TYPE)
-        sys.create_column_family('Twissandra', 'Followers', comparator_type=BYTES_TYPE)
-        sys.create_column_family('Twissandra', 'Tweet', comparator_type=UTF8_TYPE)
-        sys.create_column_family('Twissandra', 'Timeline', comparator_type=LONG_TYPE)
-        sys.create_column_family('Twissandra', 'Userline', comparator_type=LONG_TYPE)
+        if not raw_input("Are you sure? (y/n) ").lower() in ('y', "yes"):
+            print "Ok, then we're done here."
+            return
+
+        print "Dropping existing keyspace..."
+        try: cursor.execute("DROP KEYSPACE twissandra")
+        except: pass
+
+        print "Creating keyspace..."
+        cursor.execute("""
+            CREATE KEYSPACE twissandra
+            WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}
+        """)
+        cursor.execute("USE twissandra")
+
+        print "Creating users columnfamily..."
+        cursor.execute("""
+            CREATE TABLE users (
+                username text PRIMARY KEY,
+                password text
+            )
+        """)
+
+        print "Creating following columnfamily..."
+        cursor.execute("""
+            CREATE TABLE following (
+                username text,
+                followed text,
+                PRIMARY KEY(username, followed)
+            )
+        """)
+
+        print "Creating followers columnfamily..."
+        cursor.execute("""
+            CREATE TABLE followers (
+                username text,
+                following text,
+                PRIMARY KEY(username, following)
+            )
+        """)
+
+
+        print "Creating tweets columnfamily..."
+        cursor.execute("""
+            CREATE TABLE tweets (
+                tweetid uuid PRIMARY KEY,
+                username text,
+                body text
+            )
+        """)
+
+        print "Creating userline columnfamily..."
+        cursor.execute("""
+            CREATE TABLE userline (
+                tweetid timeuuid,
+                username text,
+                body text,
+                PRIMARY KEY(username, tweetid)
+            )
+        """)
+
+        print "Creating timeline columnfamily..."
+        cursor.execute("""
+            CREATE TABLE timeline (
+                tweetid timeuuid,
+                username text,
+                posted_by text,
+                body text,
+                PRIMARY KEY(username, tweetid)
+            )
+        """)
 
         print 'All done!'
+
+# vi:se ai ts=4 sw=4 et:

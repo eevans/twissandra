@@ -50,7 +50,5 @@ class RegistrationForm(forms.Form):
     def save(self):
         username = self.cleaned_data['username']
         password = self.cleaned_data['password1']
-        cass.save_user(username, {
-            'password': password,
-        })
+        cass.save_user(username, password)
         return username

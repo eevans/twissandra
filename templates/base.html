@@ -16,13 +16,13 @@
 	                <a href="/">Twissandra</a>
 	            </div>
         	    <ul id="nav" class="grid_5">
-        	        <li><a href="{% url timeline %}">Home</a></li>
-        	        <li><a href="{% url publicline %}">Public</a></li>
-        	        <li><a href="{% url find_friends %}">Find Friends</a></li>
+        	        <li><a href="{% url "timeline" %}">Home</a></li>
+        	        <li><a href="{% url "publicline" %}">Public</a></li>
+        	        <li><a href="{% url "find_friends" %}">Find Friends</a></li>
         	        {% if request.user.is_authenticated %}
-        	            <li><a href="{% url logout %}">Sign out of {{ request.session.username }}</a></li>
+        	            <li><a href="{% url "logout" %}">Sign out of {{ request.session.username }}</a></li>
         	        {% else %}
-        	            <li><a href="{% url login %}">Login</a></li>
+        	            <li><a href="{% url "login" %}">Login</a></li>
         	        {% endif %}
         	    </ul>
     	    </div>
@@ -36,7 +36,7 @@
                     functionality to Twitter.
                 </p>
                 <p>
-                    View the code for this site <a href="http://github.com/twissandra/twissandra">on GitHub</a>
+                    View the code for this site <a href="http://github.com/eevans/twissandra">on GitHub</a>
                 </p>
                 {% block sidebar %}
                 {% endblock %}
