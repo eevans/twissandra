@@ -78,8 +78,8 @@ def get_timeline(username, start=None, limit=40):
     else: posted_at_start = "now()"
 
     query = """
-        SELECT posted_at, posted_by, body FROM timeline
-        WHERE username = :username AND posted_at < %s ORDER BY posted_at DESC LIMIT %d
+        SELECT tweetid, posted_by, body FROM timeline
+        WHERE username = :username AND tweetid < %s ORDER BY tweetid DESC LIMIT %d
     """
     cursor.execute(query % (posted_at_start, limit+1), dict(username=username))
 
@@ -102,8 +102,8 @@ def get_userline(username, start=None, limit=40):
     else: posted_at_start = "now()"
 
     query = """
-        SELECT posted_at, body FROM userline
-        WHERE username = :username AND posted_at < %s ORDER BY posted_at DESC LIMIT %d
+        SELECT tweetid, body FROM userline
+        WHERE username = :username AND tweetid < %s ORDER BY tweetid DESC LIMIT %d
     """
     cursor.execute(query % (posted_at_start, limit+1), dict(username=username))
 
@@ -122,7 +122,7 @@ def get_tweet(tweet_id):
     """
     Given a tweet id, this gets the entire tweet record.
     """
-    cursor.execute("SELECT username, body FROM tweets WHERE id = :uuid", dict(uuid=tweet_id))
+    cursor.execute("SELECT username, body FROM tweets WHERE tweetid = :uuid", dict(uuid=tweet_id))
     if not (cursor.rowcount > 0):
         raise NotFound('Tweet %s not found' % (tweet_id,))
     row = cursor.fetchone()
@@ -151,13 +151,13 @@ def save_tweet(username, body):
 
     # Insert the tweet, then into the user's userline, then into the public userline.
     cursor.execute(
-        "INSERT INTO tweets (id, username, body) VALUES (:tweet_id, :username, :body)",
+        "INSERT INTO tweets (tweetid, username, body) VALUES (:tweet_id, :username, :body)",
         dict(tweet_id=tweet_id, username=username, body=body))
     cursor.execute(
-        "INSERT INTO userline (username, posted_at, body) VALUES (:username, :posted_at, :body)",
+        "INSERT INTO userline (username, tweetid, body) VALUES (:username, :posted_at, :body)",
         dict(username=username, posted_at=tweet_id, body=body))
     cursor.execute(
-        """INSERT INTO timeline (username, posted_at, posted_by, body)
+        """INSERT INTO timeline (username, tweetid, posted_by, body)
            VALUES (:username, :posted_at, :posted_by, :body)""",
         dict(username=PUBLIC_TIMELINE_KEY, posted_at=tweet_id, posted_by=username, body=body))
 
@@ -165,7 +165,7 @@ def save_tweet(username, body):
     follower_usernames = [username] + get_follower_usernames(username)
     for follower_username in follower_usernames:
         cursor.execute(
-            """INSERT INTO timeline (username, posted_at, posted_by, body)
+            """INSERT INTO timeline (username, tweetid, posted_by, body)
                VALUES (:username, :posted_at, :posted_by, :body)""",
             dict(username=follower_username, posted_at=tweet_id, posted_by=username, body=body))
 

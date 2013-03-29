@@ -20,7 +20,8 @@ class Command(NoArgsCommand):
             return
 
         print "Dropping existing keyspace..."
-        cursor.execute("DROP KEYSPACE twissandra")
+        try: cursor.execute("DROP KEYSPACE twissandra")
+        except: pass
 
         print "Creating keyspace..."
         cursor.execute("""
@@ -59,7 +60,7 @@ class Command(NoArgsCommand):
         print "Creating tweets columnfamily..."
         cursor.execute("""
             CREATE TABLE tweets (
-                id uuid PRIMARY KEY,
+                tweetid uuid PRIMARY KEY,
                 username text,
                 body text
             )
@@ -68,21 +69,21 @@ class Command(NoArgsCommand):
         print "Creating userline columnfamily..."
         cursor.execute("""
             CREATE TABLE userline (
-                posted_at timeuuid,
+                tweetid timeuuid,
                 username text,
                 body text,
-                PRIMARY KEY(username, posted_at)
+                PRIMARY KEY(username, tweetid)
             )
         """)
 
         print "Creating timeline columnfamily..."
         cursor.execute("""
             CREATE TABLE timeline (
-                posted_at timeuuid,
+                tweetid timeuuid,
                 username text,
                 posted_by text,
                 body text,
-                PRIMARY KEY(username, posted_at)
+                PRIMARY KEY(username, tweetid)
             )
         """)
 
